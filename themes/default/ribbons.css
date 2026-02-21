@@ -1,0 +1,198 @@
+/* --- 3. Navigation / Tabs --- */
+nav {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+nav .tabs-list {
+    pointer-events: auto;
+    display: flex;
+    background: var(--box-bg);
+    padding: 4px;
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-sm);
+    list-style: none;
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+}
+
+.tab-item {
+    border-radius: var(--radius-full);
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 7px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition: background-color 0.15s ease, color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.tab-btn:hover {
+    background-color: #f3f2f1;
+    color: #000;
+}
+
+.tab-item.active .tab-btn {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* --- 4. The Ribbon Box --- */
+.content-box {
+    width: 100%;
+    background-color: var(--box-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    padding: 1.8rem 0.5rem 0.5rem 0.5rem; 
+    position: relative;
+    border: 1px solid var(--border-color);
+    min-height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-panel {
+    display: none;
+    animation: fadeIn 0.2s ease forwards;
+    width: 100%;
+}
+
+.tab-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 5. Inner Boxes as Ribbon Groups --- */
+.inner-boxes-wrapper {
+    display: flex;
+    gap: 6px; 
+    align-items: stretch;
+    height: var(--ribbon-group-height); 
+    overflow-x: auto;
+    padding-bottom: 4px;
+    width: 100%;
+}
+
+.inner-box {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: #ffffff;
+    height: 100%;
+    min-width: fit-content; 
+    padding: 5px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.group-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.tools-row {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    justify-content: space-around; 
+    margin: auto 0; 
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+/* --- 6. Editor Tools Styling --- */
+.tool-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text-main);
+    font-size: 14px;
+    position: relative;
+    transition: all 0.1s;
+}
+
+.tool-btn:hover {
+    background-color: #f3f2f1;
+}
+
+.tool-btn.active-tool {
+    background-color: #c7e0f4;
+    color: var(--primary-color);
+    border-color: rgba(43, 87, 154, 0.2);
+}
+
+select.tool-select {
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    outline: none;
+    height: 24px;
+    
+    /* Expanded in row */
+    flex: 1;
+    width: 100%;
+    min-width: 40px; /* Prevents crushing on very small screens */
+}
+
+select.tool-select:hover {
+    background-color: #f3f2f1;
+}
+
+input[type="color"] {
+    width: 20px;
+    height: 20px;
+    border: none;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.separator {
+    width: 1px;
+    background-color: var(--border-color);
+    height: 20px;
+    margin: 0 4px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .content-box { padding: 3.2rem 0.4rem 0.4rem 0.4rem; }
+    .tab-btn { padding: 7px 10px; font-size: 0.75rem; }
+    .inner-box { padding: 5px 4px; }
+    .group-label { display: none; }
+}
