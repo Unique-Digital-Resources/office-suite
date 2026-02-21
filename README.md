@@ -1,2 +1,2 @@
 # office-suite
- web version of office suite
+a web version of office suite

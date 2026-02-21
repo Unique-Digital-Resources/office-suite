@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS365 Style Web Editor</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* --- 1. CSS Reset & Variables --- */
+        :root {
+            --primary-color: #2b579a; 
+            --primary-hover: #1e40af;
+            --bg-color: #f3f2f1;
+            --box-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #605e5c;
+            --border-color: #e1dfdd;
+            --radius-md: 6px; 
+            --radius-full: 9999px; 
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            
+            /* Editor Specific */
+            --ribbon-group-height: 85px; 
+            --page-width: 816px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* --- 2. Main Layout Wrapper --- */
+        .app-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 45px; 
+            margin-bottom: 20px;
+            z-index: 50;
+        }
+
+        /* --- 3. Navigation / Tabs --- */
+        nav {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        nav .tabs-list {
+            pointer-events: auto;
+            display: flex;
+            background: var(--box-bg);
+            padding: 4px;
+            border-radius: var(--radius-full);
+            box-shadow: var(--shadow-sm);
+            list-style: none;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-item {
+            border-radius: var(--radius-full);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            border-radius: var(--radius-full);
+            transition: background-color 0.15s ease, color 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background-color: #f3f2f1;
+            color: #000;
+        }
+
+        .tab-item.active .tab-btn {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* --- 4. The Ribbon Box --- */
+        .content-box {
+            width: 100%;
+            background-color: var(--box-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            padding: 1.8rem 0.5rem 0.5rem 0.5rem; 
+            position: relative;
+            border: 1px solid var(--border-color);
+            min-height: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.2s ease forwards;
+            width: 100%;
+        }
+
+        .tab-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 5. Inner Boxes as Ribbon Groups --- */
+        .inner-boxes-wrapper {
+            display: flex;
+            gap: 6px; 
+            align-items: stretch;
+            height: var(--ribbon-group-height); 
+            overflow-x: auto;
+            padding-bottom: 4px;
+            width: 100%;
+        }
+
+        .inner-box {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            height: 100%;
+            min-width: fit-content; 
+            padding: 5px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .group-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .tools-row {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+            justify-content: space-around; 
+            margin: auto 0; 
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        /* --- 6. Editor Tools Styling --- */
+        .tool-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 3px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 14px;
+            position: relative;
+            transition: all 0.1s;
+        }
+
+        .tool-btn:hover {
+            background-color: #f3f2f1;
+        }
+
+        .tool-btn.active-tool {
+            background-color: #c7e0f4;
+            color: var(--primary-color);
+            border-color: rgba(43, 87, 154, 0.2);
+        }
+
+        select.tool-select {
+            border: 1px solid transparent;
+            background: transparent;
+            font-family: inherit;
+            font-size: 11px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            outline: none;
+            height: 24px;
+            
+            /* Expanded in row */
+            flex: 1;
+            width: 100%;
+            min-width: 40px; /* Prevents crushing on very small screens */
+        }
+        
+        select.tool-select:hover {
+            background-color: #f3f2f1;
+        }
+
+        input[type="color"] {
+            width: 20px;
+            height: 20px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+        }
+
+        .separator {
+            width: 1px;
+            background-color: var(--border-color);
+            height: 20px;
+            margin: 0 4px;
+        }
+
+        /* --- 7. The Editor Page --- */
+        .editor-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #editor-page {
+            width: 100%;
+            max-width: var(--page-width);
+            min-height: 1100px;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 60px 80px;
+            outline: none;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #000;
+            position: relative;
+        }
+
+        #editor-page:empty:before {
+            content: "Start typing your document...";
+            color: #ccc;
+            pointer-events: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #323130;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .app-wrapper { margin-top: 55px; }
+            .content-box { padding: 3.2rem 0.4rem 0.4rem 0.4rem; }
+            #editor-page { padding: 30px 20px; }
+            .tab-btn { padding: 7px 10px; font-size: 0.75rem; }
+            .inner-box { padding: 5px 4px; }
+            .group-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        
+        <!-- Main Ribbon Box -->
+        <main class="content-box">
+            
+            <!-- TAB 1: HOME -->
+            <div id="tab-1" class="tab-panel active">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Group: Clipboard -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Paste" onclick="execCmd('paste')"><i class="ph ph-clipboard-text"></i></button>
+                            <button class="tool-btn" title="Cut" onclick="execCmd('cut')"><i class="ph ph-scissors"></i></button>
+                            <button class="tool-btn" title="Copy" onclick="execCmd('copy')"><i class="ph ph-copy"></i></button>
+                        </div>
+                        <div class="group-label">Clipboard</div>
+                    </div>
+
+                    <!-- Group: Font -->
+                    <div class="inner-box">
+                        <div class="tools-row" style="flex-direction: column; gap: 2px; align-items: center;">
+                            <div class="tools-row" style="width:100%;">
+                                <select class="tool-select" onchange="execCmd('fontName', this.value)">
+                                    <option value="Segoe UI">Segoe UI</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Courier New">Courier New</option>
+                                    <option value="Georgia">Georgia</option>
+                                </select>
+                                <select class="tool-select" onchange="execCmd('fontSize', this.value)">
+                                    <option value="1">8</option>
+                                    <option value="2">10</option>
+                                    <option value="3" selected>12</option>
+                                    <option value="4">14</option>
+                                    <option value="5">18</option>
+                                    <option value="6">24</option>
+                                    <option value="7">36</option>
+                                </select>
+                            </div>
+                            <div class="tools-row">
+                                <button class="tool-btn" data-cmd="bold" title="Bold"><i class="ph ph-text-b"></i></button>
+                                <button class="tool-btn" data-cmd="italic" title="Italic"><i class="ph ph-text-italic"></i></button>
+                                <button class="tool-btn" data-cmd="underline" title="Underline"><i class="ph ph-text-underline"></i></button>
+                                <div class="separator"></div>
+                                <button class="tool-btn" title="Text Color">
+                                    <i class="ph ph-text-a-underline" style="color: red;"></i>
+                                    <input type="color" onchange="execCmd('foreColor', this.value)" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                                </button>
+                                <button class="tool-btn" title="Highlight Color">
+                                    <i class="ph ph-highlighter" style="color: yellow;"></i>
+                                    <input type="color" onchange="execCmd('hiliteColor', this.value)" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="group-label">Font</div>
+                    </div>
+
+                    <!-- Group: Paragraph -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" data-cmd="insertUnorderedList" title="Bullets"><i class="ph ph-list-bullets"></i></button>
+                            <button class="tool-btn" data-cmd="insertOrderedList" title="Numbering"><i class="ph ph-list-numbers"></i></button>
+                            <button class="tool-btn" onclick="execCmd('outdent')" title="Decrease Indent"><i class="ph ph-text-indent"></i></button>
+                            <button class="tool-btn" onclick="execCmd('indent')" title="Increase Indent"><i class="ph ph-text-outdent"></i></button>
+                            <div class="separator"></div>
+                            <button class="tool-btn" data-cmd="justifyLeft" title="Align Left"><i class="ph ph-text-align-left"></i></button>
+                            <button class="tool-btn" data-cmd="justifyCenter" title="Center"><i class="ph ph-text-align-center"></i></button>
+                            <button class="tool-btn" data-cmd="justifyRight" title="Align Right"><i class="ph ph-text-align-right"></i></button>
+                        </div>
+                        <div class="group-label">Paragraph</div>
+                    </div>
+
+                    <!-- Group: Editing -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Find" onclick="showToast('Find feature (Simulation)')"><i class="ph ph-magnifying-glass"></i></button>
+                            <button class="tool-btn" onclick="execCmd('removeFormat')" title="Clear Formatting"><i class="ph ph-eraser"></i></button>
+                        </div>
+                        <div class="group-label">Editing</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 2: INSERT -->
+            <div id="tab-2" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Pages -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Cover Page" onclick="showToast('Cover Page (Simulation)')"><i class="ph ph-file-text"></i></button>
+                            <button class="tool-btn" title="Blank Page" onclick="execCmd('insertParagraph')"><i class="ph ph-plus"></i></button>
+                            <button class="tool-btn" title="Page Break" onclick="execCmd('insertHorizontalRule')"><i class="ph ph-page-break"></i></button>
+                        </div>
+                        <div class="group-label">Pages</div>
+                    </div>
+
+                    <!-- Tables -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Table" onclick="insertTable()"><i class="ph ph-table"></i></button>
+                        </div>
+                        <div class="group-label">Tables</div>
+                    </div>
+
+                    <!-- Illustrations -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Pictures" onclick="document.getElementById('img-upload').click()"><i class="ph ph-image"></i></button>
+                            <input type="file" id="img-upload" accept="image/*" style="display: none;" onchange="insertImage(this)">
+                            <button class="tool-btn" title="Shapes (Simulation)" onclick="showToast('Insert Shape (Simulation)')"><i class="ph ph-polygon"></i></button>
+                            <button class="tool-btn" title="Chart (Simulation)" onclick="showToast('Insert Chart (Simulation)')"><i class="ph ph-chart-bar"></i></button>
+                        </div>
+                        <div class="group-label">Illustrations</div>
+                    </div>
+
+                    <!-- Links -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Link" onclick="createLink()"><i class="ph ph-link"></i></button>
+                            <button class="tool-btn" title="Bookmark (Simulation)" onclick="showToast('Bookmark (Simulation)')"><i class="ph ph-bookmark-simple"></i></button>
+                        </div>
+                        <div class="group-label">Links</div>
+                    </div>
+
+                    <!-- Header & Footer -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Header" onclick="showToast('Header Edit (Simulation)')"><i class="ph ph-article"></i></button>
+                            <button class="tool-btn" title="Footer" onclick="showToast('Footer Edit (Simulation)')"><i class="ph ph-footer"></i></button>
+                            <button class="tool-btn" title="Page Number" onclick="showToast('Insert Page Number (Simulation)')"><i class="ph ph-hash"></i></button>
+                        </div>
+                        <div class="group-label">Header & Footer</div>
+                    </div>
+
+                    <!-- Text -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Text Box (Simulation)" onclick="showToast('Text Box (Simulation)')"><i class="ph ph-textbox"></i></button>
+                            <button class="tool-btn" title="WordArt (Simulation)" onclick="showToast('WordArt (Simulation)')"><i class="ph ph-paint-brush-broad"></i></button>
+                            <button class="tool-btn" title="Date & Time" onclick="insertDateTime()"><i class="ph ph-calendar-blank"></i></button>
+                        </div>
+                        <div class="group-label">Text</div>
+                    </div>
+
+                    <!-- Symbols -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Equation (Simulation)" onclick="showToast('Insert Equation (Simulation)')"><i class="ph ph-function"></i></button>
+                            <button class="tool-btn" title="Symbol" onclick="insertSymbol()"><i class="ph ph-copyright"></i></button>
+                        </div>
+                        <div class="group-label">Symbols</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 3: DESIGN -->
+            <div id="tab-3" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Document Formatting -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Themes (Simulation)" onclick="showToast('Themes (Simulation)')"><i class="ph ph-palette"></i></button>
+                            <button class="tool-btn" title="Colors (Simulation)" onclick="showToast('Colors (Simulation)')"><i class="ph ph-paint-bucket"></i></button>
+                            <button class="tool-btn" title="Fonts (Simulation)" onclick="showToast('Fonts (Simulation)')"><i class="ph ph-text-aa"></i></button>
+                            <button class="tool-btn" title="Effects (Simulation)" onclick="showToast('Effects (Simulation)')"><i class="ph ph-magic-wand"></i></button>
+                        </div>
+                        <div class="group-label">Document Formatting</div>
+                    </div>
+
+                    <!-- Page Background -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Watermark (Simulation)" onclick="showToast('Watermark (Simulation)')"><i class="ph ph-drop"></i></button>
+                            <button class="tool-btn" title="Page Color" onclick="changePageColor()"><i class="ph ph-paint-bucket"></i></button>
+                            <button class="tool-btn" title="Page Borders (Simulation)" onclick="showToast('Page Borders (Simulation)')"><i class="ph ph-border-all"></i></button>
+                        </div>
+                        <div class="group-label">Page Background</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 4: LAYOUT -->
+            <div id="tab-4" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Page Setup -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Margins (Simulation)" onclick="showToast('Margins (Simulation)')"><i class="ph ph-layout"></i></button>
+                            <button class="tool-btn" title="Orientation" onclick="toggleOrientation()"><i class="ph ph-arrows-clockwise"></i></button>
+                            <button class="tool-btn" title="Size (Simulation)" onclick="showToast('Paper Size (Simulation)')"><i class="ph ph-file"></i></button>
+                            <button class="tool-btn" title="Columns (Simulation)" onclick="showToast('Columns (Simulation)')"><i class="ph ph-columns"></i></button>
+                            <button class="tool-btn" title="Breaks" onclick="execCmd('insertHorizontalRule')"><i class="ph ph-page-break"></i></button>
+                        </div>
+                        <div class="group-label">Page Setup</div>
+                    </div>
+
+                    <!-- Paragraph -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Indent Left" onclick="execCmd('outdent')"><i class="ph ph-text-indent"></i></button>
+                            <button class="tool-btn" title="Indent Right" onclick="execCmd('indent')"><i class="ph ph-text-outdent"></i></button>
+                        </div>
+                        <div class="group-label">Paragraph</div>
+                    </div>
+
+                    <!-- Arrange -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Position (Simulation)" onclick="showToast('Position (Simulation)')"><i class="ph ph-crosshair"></i></button>
+                            <button class="tool-btn" title="Wrap Text (Simulation)" onclick="showToast('Wrap Text (Simulation)')"><i class="ph ph-text-wrap"></i></button>
+                            <button class="tool-btn" title="Bring Forward (Simulation)" onclick="showToast('Bring Forward (Simulation)')"><i class="ph ph-stack-overflow"></i></button>
+                            <button class="tool-btn" title="Send Backward (Simulation)" onclick="showToast('Send Backward (Simulation)')"><i class="ph ph-stack"></i></button>
+                        </div>
+                        <div class="group-label">Arrange</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 5: REFERENCES -->
+            <div id="tab-5" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Table of Contents -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Table of Contents (Simulation)" onclick="showToast('Table of Contents (Simulation)')"><i class="ph ph-list-dashes"></i></button>
+                        </div>
+                        <div class="group-label">Table of Contents</div>
+                    </div>
+
+                    <!-- Footnotes -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Insert Footnote (Simulation)" onclick="showToast('Insert Footnote (Simulation)')"><i class="ph ph-footprint"></i></button>
+                            <button class="tool-btn" title="Insert Endnote (Simulation)" onclick="showToast('Insert Endnote (Simulation)')"><i class="ph ph-note"></i></button>
+                        </div>
+                        <div class="group-label">Footnotes</div>
+                    </div>
+
+                    <!-- Research -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Smart Lookup (Simulation)" onclick="showToast('Smart Lookup (Simulation)')"><i class="ph ph-globe"></i></button>
+                            <button class="tool-btn" title="Researcher (Simulation)" onclick="showToast('Researcher (Simulation)')"><i class="ph ph-magnifying-glass-plus"></i></button>
+                        </div>
+                        <div class="group-label">Research</div>
+                    </div>
+
+                    <!-- Citations & Bibliography -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Insert Citation (Simulation)" onclick="showToast('Insert Citation (Simulation)')"><i class="ph ph-quotes"></i></button>
+                            <button class="tool-btn" title="Bibliography (Simulation)" onclick="showToast('Bibliography (Simulation)')"><i class="ph ph-books"></i></button>
+                        </div>
+                        <div class="group-label">Citations & Bibliography</div>
+                    </div>
+
+                    <!-- Captions -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Insert Caption (Simulation)" onclick="showToast('Insert Caption (Simulation)')"><i class="ph ph-text-t"></i></button>
+                        </div>
+                        <div class="group-label">Captions</div>
+                    </div>
+
+                    <!-- Index -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Mark Entry (Simulation)" onclick="showToast('Mark Entry (Simulation)')"><i class="ph ph-tag"></i></button>
+                            <button class="tool-btn" title="Insert Index (Simulation)" onclick="showToast('Insert Index (Simulation)')"><i class="ph ph-list-numbers"></i></button>
+                        </div>
+                        <div class="group-label">Index</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 6: MAILINGS -->
+            <div id="tab-6" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Create -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Envelopes (Simulation)" onclick="showToast('Envelopes (Simulation)')"><i class="ph ph-envelope"></i></button>
+                            <button class="tool-btn" title="Labels (Simulation)" onclick="showToast('Labels (Simulation)')"><i class="ph ph-tag"></i></button>
+                        </div>
+                        <div class="group-label">Create</div>
+                    </div>
+
+                    <!-- Start Mail Merge -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Start Mail Merge (Simulation)" onclick="showToast('Start Mail Merge (Simulation)')"><i class="ph ph-users"></i></button>
+                            <button class="tool-btn" title="Select Recipients (Simulation)" onclick="showToast('Select Recipients (Simulation)')"><i class="ph ph-address-book"></i></button>
+                        </div>
+                        <div class="group-label">Start Mail Merge</div>
+                    </div>
+
+                    <!-- Write & Insert Fields -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Address Block (Simulation)" onclick="showToast('Address Block (Simulation)')"><i class="ph ph-map-pin"></i></button>
+                            <button class="tool-btn" title="Greeting Line (Simulation)" onclick="showToast('Greeting Line (Simulation)')"><i class="ph ph-hand-waving"></i></button>
+                            <button class="tool-btn" title="Insert Merge Field (Simulation)" onclick="showToast('Insert Merge Field (Simulation)')"><i class="ph ph-textbox"></i></button>
+                        </div>
+                        <div class="group-label">Write & Insert Fields</div>
+                    </div>
+
+                    <!-- Preview Results -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Preview Results (Simulation)" onclick="showToast('Preview Results (Simulation)')"><i class="ph ph-eye"></i></button>
+                        </div>
+                        <div class="group-label">Preview Results</div>
+                    </div>
+
+                    <!-- Finish -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Finish & Merge (Simulation)" onclick="showToast('Finish & Merge (Simulation)')"><i class="ph ph-check-circle"></i></button>
+                        </div>
+                        <div class="group-label">Finish</div>
+                    </div>
+
+                    <!-- Acrobat -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Merge to Adobe PDF (Simulation)" onclick="showToast('Merge to Adobe PDF (Simulation)')"><i class="ph ph-file-pdf"></i></button>
+                        </div>
+                        <div class="group-label">Acrobat</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 7: REVIEW -->
+            <div id="tab-7" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Proofing -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Spelling & Grammar (Simulation)" onclick="showToast('Spelling & Grammar (Simulation)')"><i class="ph ph-check-circle"></i></button>
+                            <button class="tool-btn" title="Word Count" onclick="wordCount()"><i class="ph ph-text-aa"></i></button>
+                        </div>
+                        <div class="group-label">Proofing</div>
+                    </div>
+
+                    <!-- Speech -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Read Aloud (Simulation)" onclick="showToast('Read Aloud (Simulation)')"><i class="ph ph-speaker-high"></i></button>
+                        </div>
+                        <div class="group-label">Speech</div>
+                    </div>
+
+                    <!-- Accessibility -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Check Accessibility (Simulation)" onclick="showToast('Check Accessibility (Simulation)')"><i class="ph ph-universal-access"></i></button>
+                        </div>
+                        <div class="group-label">Accessibility</div>
+                    </div>
+
+                    <!-- Language -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Translate (Simulation)" onclick="showToast('Translate (Simulation)')"><i class="ph ph-translate"></i></button>
+                            <button class="tool-btn" title="Language (Simulation)" onclick="showToast('Language (Simulation)')"><i class="ph ph-globe"></i></button>
+                        </div>
+                        <div class="group-label">Language</div>
+                    </div>
+
+                    <!-- Comments -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="New Comment (Simulation)" onclick="showToast('New Comment (Simulation)')"><i class="ph ph-chat-text"></i></button>
+                            <button class="tool-btn" title="Delete Comment (Simulation)" onclick="showToast('Delete Comment (Simulation)')"><i class="ph ph-trash"></i></button>
+                            <button class="tool-btn" title="Previous Comment (Simulation)" onclick="showToast('Previous Comment (Simulation)')"><i class="ph ph-caret-left"></i></button>
+                            <button class="tool-btn" title="Next Comment (Simulation)" onclick="showToast('Next Comment (Simulation)')"><i class="ph ph-caret-right"></i></button>
+                        </div>
+                        <div class="group-label">Comments</div>
+                    </div>
+
+                    <!-- Tracking -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Track Changes (Simulation)" onclick="showToast('Track Changes (Simulation)')"><i class="ph ph-pencil-simple-line"></i></button>
+                        </div>
+                        <div class="group-label">Tracking</div>
+                    </div>
+
+                    <!-- Changes -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Accept (Simulation)" onclick="showToast('Accept Change (Simulation)')"><i class="ph ph-check"></i></button>
+                            <button class="tool-btn" title="Reject (Simulation)" onclick="showToast('Reject Change (Simulation)')"><i class="ph ph-x"></i></button>
+                        </div>
+                        <div class="group-label">Changes</div>
+                    </div>
+
+                    <!-- Compare -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Compare (Simulation)" onclick="showToast('Compare Documents (Simulation)')"><i class="ph ph-git-diff"></i></button>
+                        </div>
+                        <div class="group-label">Compare</div>
+                    </div>
+
+                    <!-- Protect -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Restrict Editing (Simulation)" onclick="showToast('Restrict Editing (Simulation)')"><i class="ph ph-lock-key"></i></button>
+                        </div>
+                        <div class="group-label">Protect</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 8: VIEW -->
+            <div id="tab-8" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Views -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Read Mode (Simulation)" onclick="showToast('Read Mode (Simulation)')"><i class="ph ph-book-open"></i></button>
+                            <button class="tool-btn" title="Print Layout" onclick="setViewMode('print-layout')"><i class="ph ph-file-text"></i></button>
+                            <button class="tool-btn" title="Web Layout" onclick="setViewMode('web-layout')"><i class="ph ph-globe"></i></button>
+                            <button class="tool-btn" title="Outline (Simulation)" onclick="showToast('Outline (Simulation)')"><i class="ph ph-list-dashes"></i></button>
+                            <button class="tool-btn" title="Draft (Simulation)" onclick="showToast('Draft (Simulation)')"><i class="ph ph-file"></i></button>
+                        </div>
+                        <div class="group-label">Views</div>
+                    </div>
+
+                    <!-- Immersive -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Focus (Simulation)" onclick="showToast('Focus (Simulation)')"><i class="ph ph-squares-four"></i></button>
+                            <button class="tool-btn" title="Immersive Reader (Simulation)" onclick="showToast('Immersive Reader (Simulation)')"><i class="ph ph-book-bookmark"></i></button>
+                        </div>
+                        <div class="group-label">Immersive</div>
+                    </div>
+
+                    <!-- Show -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Ruler (Simulation)" onclick="showToast('Ruler (Simulation)')"><i class="ph ph-ruler"></i></button>
+                            <button class="tool-btn" title="Gridlines (Simulation)" onclick="showToast('Gridlines (Simulation)')"><i class="ph ph-grid-four"></i></button>
+                            <button class="tool-btn" title="Navigation Pane (Simulation)" onclick="showToast('Navigation Pane (Simulation)')"><i class="ph ph-sidebar"></i></button>
+                        </div>
+                        <div class="group-label">Show</div>
+                    </div>
+
+                    <!-- Zoom -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                             <button class="tool-btn" title="Zoom In" onclick="zoom(0.1)"><i class="ph ph-magnifying-glass-plus"></i></button>
+                             <button class="tool-btn" title="Zoom Out" onclick="zoom(-0.1)"><i class="ph ph-magnifying-glass-minus"></i></button>
+                             <button class="tool-btn" title="100%" onclick="zoom(0)">100%</button>
+                        </div>
+                        <div class="group-label">Zoom</div>
+                    </div>
+
+                    <!-- Window -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="New Window (Simulation)" onclick="showToast('New Window (Simulation)')"><i class="ph ph-copy"></i></button>
+                            <button class="tool-btn" title="Split (Simulation)" onclick="showToast('Split (Simulation)')"><i class="ph ph-arrows-split"></i></button>
+                            <button class="tool-btn" title="View Side by Side (Simulation)" onclick="showToast('View Side by Side (Simulation)')"><i class="ph ph-columns"></i></button>
+                            <button class="tool-btn" title="Switch Windows (Simulation)" onclick="showToast('Switch Windows (Simulation)')"><i class="ph ph-arrows-left-right"></i></button>
+                        </div>
+                        <div class="group-label">Window</div>
+                    </div>
+
+                    <!-- Macros -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Macros (Simulation)" onclick="showToast('Macros (Simulation)')"><i class="ph ph-lightning"></i></button>
+                        </div>
+                        <div class="group-label">Macros</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 9: HELP -->
+            <div id="tab-9" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Help -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Help" onclick="showToast('Help (Simulation)')"><i class="ph ph-question"></i></button>
+                            <button class="tool-btn" title="Contact Support (Simulation)" onclick="showToast('Contact Support (Simulation)')"><i class="ph ph-headset"></i></button>
+                            <button class="tool-btn" title="Feedback (Simulation)" onclick="showToast('Feedback (Simulation)')"><i class="ph ph-chat-circle-text"></i></button>
+                            <button class="tool-btn" title="Show Training (Simulation)" onclick="showToast('Show Training (Simulation)')"><i class="ph ph-graduation-cap"></i></button>
+                            <button class="tool-btn" title="What's New (Simulation)" onclick="showToast('What's New (Simulation)')"><i class="ph ph-sparkle"></i></button>
+                        </div>
+                        <div class="group-label">Help</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- TAB 10: ACROBAT -->
+            <div id="tab-10" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    
+                    <!-- Create Adobe PDF -->
+                    <div class="inner-box">
+                        <div class="tools-row">
+                            <button class="tool-btn" title="Create PDF" onclick="showToast('Create PDF (Simulation)')"><i class="ph ph-file-pdf"></i></button>
+                        </div>
+                        <div class="group-label">Create Adobe PDF</div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Navigation (Tabs) -->
+        <nav>
+            <ul class="tabs-list">
+                <li class="tab-item active">
+                    <button class="tab-btn" data-tab="tab-1">Home</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-2">Insert</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-3">Design</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-4">Layout</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-5">References</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-6">Mailings</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-7">Review</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-8">View</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-9">Help</button>
+                </li>
+                <li class="tab-item">
+                    <button class="tab-btn" data-tab="tab-10">Acrobat</button>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+
+    <!-- The Editor Canvas -->
+    <div class="editor-container">
+        <div id="editor-page" contenteditable="true" spellcheck="false">
+            <h1 style="text-align: center;">Welcome to your new document</h1>
+            <p>This is a <b>rich text editor</b> built with vanilla HTML, CSS, and JavaScript.</p>
+            <p>Use the <b>Home</b> tab for basic formatting, <b>Insert</b> to add tables, images, links, date & time and symbols, and <b>View</b> to zoom or change layout modes (simulated).</p>
+            <p>More advanced tabs (Design, Layout, References, Mailings, Review, Help, Acrobat) expose the main groups and commands as buttons.</p>
+            <ul>
+                <li>All in a single HTML file.</li>
+                <li>Uses contenteditable + execCommand for editable functionality.</li>
+                <li>Tab and ribbon layout preserved as requested.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Notification Element -->
+    <div id="toast" class="toast">Action performed</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const buttons = document.querySelectorAll('.tab-btn');
+            const panels = document.querySelectorAll('.tab-panel');
+            const tabItems = document.querySelectorAll('.tab-item');
+
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    tabItems.forEach(item => item.classList.remove('active'));
+
+                    const parentLi = btn.closest('.tab-item');
+                    btn.classList.add('active');
+                    parentLi.classList.add('active');
+
+                    panels.forEach(panel => panel.classList.remove('active'));
+                    const targetId = btn.getAttribute('data-tab');
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+            
+            initToolButtons();
+            document.addEventListener('selectionchange', updateToolbarState);
+            updateToolbarState();
+        });
+
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor-page').focus();
+            updateToolbarState();
+        }
+
+        function initToolButtons() {
+            const buttons = document.querySelectorAll('.tool-btn[data-cmd]');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const cmd = btn.getAttribute('data-cmd');
+                    execCmd(cmd);
+                });
+            });
+        }
+
+        function updateToolbarState() {
+            const buttons = document.querySelectorAll('.tool-btn[data-cmd]');
+            buttons.forEach(btn => {
+                const cmd = btn.getAttribute('data-cmd');
+                if (document.queryCommandState(cmd)) {
+                    btn.classList.add('active-tool');
+                } else {
+                    btn.classList.remove('active-tool');
+                }
+            });
+        }
+
+        function insertImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    execCmd('insertImage', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+                input.value = '';
+            }
+        }
+
+        function insertTable() {
+            const tableHTML = `
+                <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                    <tbody>
+                        <tr><td style="border: 1px solid #000; padding: 5px;">Cell 1</td><td style="border: 1px solid #000; padding: 5px;">Cell 2</td></tr>
+                        <tr><td style="border: 1px solid #000; padding: 5px;">Cell 3</td><td style="border: 1px solid #000; padding: 5px;">Cell 4</td></tr>
+                    </tbody>
+                </table><p><br></p>
+            `;
+            execCmd('insertHTML', tableHTML);
+            showToast('Table inserted');
+        }
+
+        function createLink() {
+            const url = prompt('Enter the URL:', 'https://');
+            if (url) {
+                execCmd('createLink', url);
+            }
+        }
+
+        function insertDateTime() {
+            const now = new Date();
+            const str = now.toLocaleString();
+            execCmd('insertText', str);
+        }
+
+        function insertSymbol() {
+            const symbol = prompt('Enter a symbol or character to insert:', '©');
+            if (symbol) {
+                execCmd('insertText', symbol);
+            }
+        }
+
+        function changePageColor() {
+            const color = prompt('Enter a background color for the page (e.g., #ffffe0):', '#ffffe0');
+            if (color) {
+                document.getElementById('editor-page').style.backgroundColor = color;
+            }
+        }
+
+        function toggleOrientation() {
+            const page = document.getElementById('editor-page');
+            const w = page.style.maxWidth || '816px';
+            if (w === '816px' || w === 'var(--page-width)') {
+                page.style.maxWidth = '1100px';
+                showToast('Orientation: Landscape (simulated)');
+            } else {
+                page.style.maxWidth = 'var(--page-width)';
+                showToast('Orientation: Portrait (simulated)');
+            }
+        }
+
+        function wordCount() {
+            const text = document.getElementById('editor-page').innerText || '';
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            showToast(`Words: ${words} | Characters: ${chars}`);
+        }
+
+        function setViewMode(mode) {
+            const page = document.getElementById('editor-page');
+            if (mode === 'print-layout') {
+                page.style.maxWidth = 'var(--page-width)';
+                page.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                showToast('View: Print Layout');
+            } else if (mode === 'web-layout') {
+                page.style.maxWidth = '100%';
+                page.style.boxShadow = 'none';
+                showToast('View: Web Layout');
+            }
+        }
+
+        let currentZoom = 1;
+        function zoom(amount) {
+            if (amount === 0) currentZoom = 1;
+            else currentZoom += amount;
+            
+            const page = document.getElementById('editor-page');
+            page.style.transform = `scale(${currentZoom})`;
+            page.style.transformOrigin = 'top center';
+            
+            if(currentZoom < 1) {
+                page.style.height = `${1100 / currentZoom}px`;
+            } else {
+                page.style.height = '1100px';
+            }
+            showToast(`Zoom: ${Math.round(currentZoom * 100)}%`);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
