@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS365 Style Web Editor</title>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="../themes/default/ribbons.css">
+</head>
+<body>
+    <div class="app-wrapper">
+        <!-- Navigation / Tabs -->
+        <nav>
+            <ul class="tabs-list">
+                <li class="tab-item active" data-tab="1">
+                    <button class="tab-btn">Home</button>
+                </li>
+                <li class="tab-item" data-tab="2">
+                    <button class="tab-btn">Insert</button>
+                </li>
+                <li class="tab-item" data-tab="3">
+                    <button class="tab-btn">Design</button>
+                </li>
+                <li class="tab-item" data-tab="4">
+                    <button class="tab-btn">Layout</button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Ribbon Box -->
+        <main class="content-box">
+            <!-- TAB 1: HOME -->
+            <div id="tab-1" class="tab-panel active">
+                <div class="inner-boxes-wrapper">
+                    <div id="rbn-clipboard" class="inner-box"></div>
+                    <div id="rbn-font" class="inner-box"></div>
+                    <div id="rbn-paragraph" class="inner-box"></div>
+                    <div id="rbn-editing" class="inner-box"></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: INSERT -->
+            <div id="tab-2" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    <div id="rbn-pages" class="inner-box"></div>
+                    <div id="rbn-tables" class="inner-box"></div>
+                    <div id="rbn-illustrations" class="inner-box"></div>
+                    <div id="rbn-links" class="inner-box"></div>
+                    <div id="rbn-header-footer" class="inner-box"></div>
+                    <div id="rbn-text" class="inner-box"></div>
+                    <div id="rbn-symbols" class="inner-box"></div>
+                </div>
+            </div>
+
+            <!-- TAB 3: DESIGN -->
+            <div id="tab-3" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    <div id="rbn-document-formatting" class="inner-box"></div>
+                    <div id="rbn-page-background" class="inner-box"></div>
+                </div>
+            </div>
+
+            <!-- TAB 4: LAYOUT -->
+            <div id="tab-4" class="tab-panel">
+                <div class="inner-boxes-wrapper">
+                    <div id="rbn-page-setup" class="inner-box"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- The Editor Page -->
+        <div class="editor-container">
+            <div id="editor-page" contenteditable="true"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Image Upload Input -->
+    <input type="file" id="img-upload" accept="image/*" style="display: none;" onchange="insertImage(this)">
+
+    <script src="js/ribbon-tabs.js"></script>
+    <script src="js/ribbon-group.js"></script>
+    <script src="js/rbn-clipboard.js"></script>
+    <script src="js/rbn-font.js"></script>
+    <script src="js/rbn-paragraph.js"></script>
+    <script src="js/rbn-pages.js"></script>
+    <script src="js/rbn-tables.js"></script>
+    <script src="js/edit-field.js"></script>
+</body>
+</html>
